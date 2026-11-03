@@ -13,6 +13,7 @@ use crate::VfsFile;
 pub enum RwFile {
 	Local(yazi_fs::engine::RwFile),
 	Sftp(Pin<Box<super::sftp::RwFile>>),
+	Opendal(Pin<Box<super::opendal::RwFile>>),
 	Lua(super::lua::File),
 }
 
@@ -24,6 +25,10 @@ impl From<super::sftp::RwFile> for RwFile {
 	fn from(f: super::sftp::RwFile) -> Self { Self::Sftp(Box::pin(f)) }
 }
 
+impl From<super::opendal::RwFile> for RwFile {
+	fn from(f: super::opendal::RwFile) -> Self { Self::Opendal(Box::pin(f)) }
+}
+
 impl From<super::lua::File> for RwFile {
 	fn from(f: super::lua::File) -> Self { Self::Lua(f) }
 }
@@ -33,6 +38,7 @@ impl AsUrl for RwFile {
 		match self {
 			Self::Local(f) => f.as_url(),
 			Self::Sftp(f) => f.as_url(),
+			Self::Opendal(f) => f.as_url(),
 			Self::Lua(f) => f.as_url(),
 		}
 	}
@@ -59,13 +65,14 @@ impl RwFile {
 		match self {
 			Self::Local(f) => f.metadata().await,
 			Self::Sftp(f) => f.metadata().await,
+			Self::Opendal(f) => Ok(f.metadata()),
 			Self::Lua(f) => f.metadata().await,
 		}
 	}
 
 	pub async fn file(&self) -> io::Result<File> {
 		match self {
-			Self::Local(_) | Self::Sftp(..) => {
+			Self::Local(_) | Self::Sftp(..) | Self::Opendal(..) => {
 				Ok(File::from_follow(self.to_url(), self.metadata().await?).await)
 			}
 			Self::Lua(f) => f.file().await,
@@ -76,6 +83,7 @@ impl RwFile {
 		match self {
 			Self::Local(f) => f.into_file().await,
 			Self::Sftp(f) => f.into_file().await,
+			Self::Opendal(f) => Ok(f.into_file()),
 			Self::Lua(f) => f.into_file().await,
 		}
 	}
@@ -83,6 +91,7 @@ impl RwFile {
 	pub(crate) fn random(&self) -> Random {
 		match self {
 			Self::Local(_) | Self::Sftp(_) => Random::Both,
+			Self::Opendal(_) => Random::Read,
 			Self::Lua(f) => f.random,
 		}
 	}
@@ -91,6 +100,7 @@ impl RwFile {
 		match self {
 			Self::Local(f) => f.set_attrs(attrs).await,
 			Self::Sftp(f) => f.set_attrs(attrs).await,
+			Self::Opendal(_) => Err(super::opendal::read_only()),
 			Self::Lua(f) => f.set_attrs(attrs).await,
 		}
 	}
@@ -99,6 +109,7 @@ impl RwFile {
 		match self {
 			Self::Local(f) => f.set_len(size).await,
 			Self::Sftp(f) => f.set_len(size).await,
+			Self::Opendal(_) => Err(super::opendal::read_only()),
 			Self::Lua(f) => f.set_len(size).await,
 		}
 	}
@@ -170,6 +181,7 @@ impl AsyncWrite for RwFile {
 		match self {
 			Self::Local(f) => f.is_write_vectored(),
 			Self::Sftp(f) => f.is_write_vectored(),
+			Self::Opendal(f) => f.is_write_vectored(),
 			Self::Lua(f) => f.is_write_vectored(),
 		}
 	}

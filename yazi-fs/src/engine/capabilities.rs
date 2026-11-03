@@ -126,6 +126,18 @@ impl Capabilities {
 				caps.trash = false;
 				caps
 			}
+			AuthKind::Opendal => Self {
+				absolute: true,
+				canonicalize: true,
+				casefold: true,
+				file: true,
+				metadata: true,
+				open: true,
+				read_dir: true,
+				revalidate: true,
+				symlink_metadata: true,
+				..Self::default()
+			},
 			AuthKind::Mount | AuthKind::Hub | AuthKind::Scope => {
 				caps.copy_from = false;
 				caps.hard_link = false;

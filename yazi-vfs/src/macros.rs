@@ -4,6 +4,7 @@ macro_rules! physical {
 			$crate::engine::Engines::Local(p) => p.$method($($arg),*).await.map(Into::into),
 			$crate::engine::Engines::Lua(p) => p.$method($($arg),*).await.map(Into::into),
 			$crate::engine::Engines::Sftp(p) => p.$method($($arg),*).await.map(Into::into),
+			$crate::engine::Engines::Opendal(p) => p.$method($($arg),*).await.map(Into::into),
 		}
 	};
 }
@@ -17,13 +18,14 @@ macro_rules! dispatch {
 			$crate::engine::Engines::Lua(p) if p.handles(capability!($method)).await? => p.$method($($arg),*).await,
 			$crate::engine::Engines::Lua(p) => physical!(p, $method $(, $arg)*),
 			$crate::engine::Engines::Sftp(p) => p.$method($($arg),*).await,
+			$crate::engine::Engines::Opendal(p) => p.$method($($arg),*).await,
 		}}
 	};
 }
 
 macro_rules! poll_rw {
 	($me:expr, $method:ident $args:tt) => {
-		poll_rw!($me, $method$args; Local, Sftp, Lua)
+		poll_rw!($me, $method$args; Local, Sftp, Opendal, Lua)
 	};
 	($me:expr, $method:ident $args:tt; $($variant:ident),+ $(,)?) => {
 		match &mut *$me {

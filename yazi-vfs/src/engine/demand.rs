@@ -46,6 +46,9 @@ impl FileBuilder for Demand {
 				self.0.build::<yazi_fs::engine::local::Demand>().open(physical).await?.into()
 			}
 			AuthKind::Sftp => self.0.build::<super::sftp::Demand>().open(physical).await?.into(),
+			AuthKind::Opendal => {
+				self.0.build::<super::opendal::Demand>().open(physical).await?.into()
+			}
 			AuthKind::Mount | AuthKind::Hub | AuthKind::Scope | AuthKind::View => {
 				self.0.build::<super::lua::Demand>().open(physical).await?.into()
 			}

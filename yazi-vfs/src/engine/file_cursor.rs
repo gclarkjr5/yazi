@@ -15,6 +15,7 @@ impl FileCursor {
 		let file = match file {
 			RwFile::Local(f) => return Ok(Self::Local(f.cursor(offset).await?)),
 			RwFile::Sftp(f) => f.cursor(offset).into(),
+			RwFile::Opendal(f) => f.cursor(offset).await?.into(),
 			RwFile::Lua(f) => f.cursor(offset).into(),
 		};
 
@@ -25,6 +26,7 @@ impl FileCursor {
 		let file = match file {
 			RwFile::Local(f) => return Ok(Self::Local(f.cursor(offset).await?)),
 			RwFile::Sftp(f) => f.cursor(offset).into(),
+			RwFile::Opendal(_) => return Err(super::opendal::read_only()),
 			RwFile::Lua(f) => f.cursor(offset).into(),
 		};
 

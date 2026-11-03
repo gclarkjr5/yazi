@@ -7,6 +7,7 @@ pub enum DirEntry {
 	Local(yazi_fs::engine::local::DirEntry),
 	Lua(super::lua::DirEntry),
 	Sftp(super::sftp::DirEntry),
+	Opendal(super::opendal::DirEntry),
 }
 
 impl FileHolder for DirEntry {
@@ -15,6 +16,7 @@ impl FileHolder for DirEntry {
 			Self::Local(dent) => dent.file().await,
 			Self::Lua(dent) => dent.file().await,
 			Self::Sftp(dent) => dent.file().await,
+			Self::Opendal(dent) => dent.file().await,
 		}
 	}
 
@@ -23,6 +25,7 @@ impl FileHolder for DirEntry {
 			Self::Local(dent) => dent.file_type().await,
 			Self::Lua(dent) => dent.file_type().await,
 			Self::Sftp(dent) => dent.file_type().await,
+			Self::Opendal(dent) => dent.file_type().await,
 		}
 	}
 
@@ -31,6 +34,7 @@ impl FileHolder for DirEntry {
 			Self::Local(dent) => dent.metadata().await,
 			Self::Lua(dent) => dent.metadata().await,
 			Self::Sftp(dent) => dent.metadata().await,
+			Self::Opendal(dent) => dent.metadata().await,
 		}
 	}
 
@@ -39,6 +43,7 @@ impl FileHolder for DirEntry {
 			Self::Local(dent) => dent.name(),
 			Self::Lua(dent) => dent.name(),
 			Self::Sftp(dent) => dent.name(),
+			Self::Opendal(dent) => dent.name(),
 		}
 	}
 
@@ -47,6 +52,7 @@ impl FileHolder for DirEntry {
 			Self::Local(dent) => dent.path(),
 			Self::Lua(dent) => dent.path(),
 			Self::Sftp(dent) => dent.path(),
+			Self::Opendal(dent) => dent.path(),
 		}
 	}
 
@@ -55,6 +61,7 @@ impl FileHolder for DirEntry {
 			Self::Local(dent) => dent.url(),
 			Self::Lua(dent) => dent.url(),
 			Self::Sftp(dent) => dent.url(),
+			Self::Opendal(dent) => dent.url(),
 		}
 	}
 }

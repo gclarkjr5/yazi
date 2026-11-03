@@ -7,6 +7,7 @@ pub(super) enum Engines<'a> {
 	Local(yazi_fs::engine::local::Local<'a>),
 	Lua(super::lua::Lua<'a>),
 	Sftp(super::sftp::Sftp<'a>),
+	Opendal(super::opendal::Opendal<'a>),
 }
 
 impl AsUrl for Engines<'_> {
@@ -15,6 +16,7 @@ impl AsUrl for Engines<'_> {
 			Self::Local(p) => p.as_url(),
 			Self::Lua(p) => p.as_url(),
 			Self::Sftp(p) => p.as_url(),
+			Self::Opendal(p) => p.as_url(),
 		}
 	}
 }
@@ -35,6 +37,7 @@ impl<'a> Engine for Engines<'a> {
 			Self::Local(p) => p.capabilities().await,
 			Self::Lua(p) => p.capabilities().await,
 			Self::Sftp(p) => p.capabilities().await,
+			Self::Opendal(p) => p.capabilities().await,
 		}
 	}
 
@@ -73,6 +76,7 @@ impl<'a> Engine for Engines<'a> {
 		Ok(match url.kind() {
 			K::Regular => Self::Me::Local(yazi_fs::engine::local::Local::new(url).await?),
 			K::Sftp => Self::Me::Sftp(super::sftp::Sftp::new(url).await?),
+			K::Opendal => Self::Me::Opendal(super::opendal::Opendal::new(url).await?),
 			K::Mount | K::Hub | K::Scope | K::View => Self::Me::Lua(super::lua::Lua::new(url).await?),
 		})
 	}
@@ -83,6 +87,7 @@ impl<'a> Engine for Engines<'a> {
 			Self::Lua(p) if p.handles(|c| c.read_dir).await? => p.read_dir().await?.into(),
 			Self::Lua(p) => physical!(p, read_dir)?,
 			Self::Sftp(p) => p.read_dir().await?.into(),
+			Self::Opendal(p) => p.read_dir().await?.into(),
 		})
 	}
 
@@ -96,6 +101,7 @@ impl<'a> Engine for Engines<'a> {
 			Self::Lua(p) if p.handles(|c| c.revalidate).await? => p.revalidate(file).await,
 			Self::Lua(p) => physical!(p, revalidate, File { url: file.url.into_physical(), ..file }),
 			Self::Sftp(p) => p.revalidate(file).await,
+			Self::Opendal(p) => p.revalidate(file).await,
 		}
 	}
 

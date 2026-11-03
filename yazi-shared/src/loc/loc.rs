@@ -154,7 +154,11 @@ where
 		T: PathView<'p, P>,
 	{
 		match kind {
-			AuthKind::Regular | AuthKind::Hub | AuthKind::Scope | AuthKind::Sftp => Self::bare(path),
+			AuthKind::Regular
+			| AuthKind::Hub
+			| AuthKind::Scope
+			| AuthKind::Sftp
+			| AuthKind::Opendal => Self::bare(path),
 			AuthKind::View | AuthKind::Mount => Self::zeroed(path),
 		}
 	}

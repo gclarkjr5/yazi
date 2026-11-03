@@ -67,6 +67,8 @@ objc2                  = "0.6.5"
 objc2-core-foundation  = { version = "0.3.2", default-features = false, features = [ "std", "CFDictionary", "CFNumber", "CFString", "CFURL" ] }
 objc2-disk-arbitration = { version = "0.3.2", default-features = false, features = [ "std", "DADisk", "DASession", "dispatch2" ] }
 objc2-foundation       = { version = "0.3.2", default-features = false, features = [ "std", "NSDateFormatter", "NSFormatter", "NSLocale", "NSString" ] }
+opendal                = { version = "0.59.5", default-features = false, features = [ "executors-tokio", "services-azblob", "services-gcs", "services-s3" ] }
+opendal-http-transport-reqwest = { version = "0.59.5", default-features = false, features = [ "rustls-no-provider" ] }
 ordered-float          = { version = "5.5.1", features = [ "serde" ] }
 parking_lot            = "0.13.0"
 paste                  = "1.0.15"

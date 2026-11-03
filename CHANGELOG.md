@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/):
 - Image preview adaptation for `st-graphics` terminal ([#4414])
 - Random read/write for virtual file systems ([#4451])
 - Windows MSI installers for stable and nightly releases ([#4473])
+- OpenDAL virtual filesystem for S3, GCS, and Azure Blob Storage ([#])
 - Windows support for `fs.partitions()` ([#4402])
 
 ### Changed

@@ -5,12 +5,13 @@ use serde::Deserialize;
 use yazi_shared::{auth::{AuthArc, AuthKind, Scheme}, path::DynPath, sendable::Sendable};
 use yazi_shim::{mlua::UserDataFieldsExt, strum::IntoStr};
 
-use super::{ServiceLua, ServiceSftp};
+use super::{ServiceLua, ServiceOpendal, ServiceSftp};
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(tag = "kind", rename_all = "kebab-case")]
 pub enum Service {
 	Sftp(Arc<ServiceSftp>),
+	Opendal(Arc<ServiceOpendal>),
 	Mount(Arc<ServiceLua>),
 	Hub(Arc<ServiceLua>),
 	Scope(Arc<ServiceLua>),
@@ -23,9 +24,26 @@ impl TryFrom<Service> for Arc<ServiceSftp> {
 	fn try_from(value: Service) -> Result<Self, Self::Error> {
 		match value {
 			Service::Sftp(p) => Ok(p),
-			Service::Mount(_) | Service::Hub(_) | Service::Scope(_) | Service::View(_) => {
-				Err("expected an SFTP service, got a custom VFS service")
-			}
+			Service::Opendal(_)
+			| Service::Mount(_)
+			| Service::Hub(_)
+			| Service::Scope(_)
+			| Service::View(_) => Err("expected an SFTP service, got another VFS service"),
+		}
+	}
+}
+
+impl TryFrom<Service> for Arc<ServiceOpendal> {
+	type Error = &'static str;
+
+	fn try_from(value: Service) -> Result<Self, Self::Error> {
+		match value {
+			Service::Opendal(p) => Ok(p),
+			Service::Sftp(_)
+			| Service::Mount(_)
+			| Service::Hub(_)
+			| Service::Scope(_)
+			| Service::View(_) => Err("expected an OpenDAL service, got another VFS service"),
 		}
 	}
 }
@@ -36,6 +54,7 @@ impl TryFrom<Service> for Arc<ServiceLua> {
 	fn try_from(value: Service) -> Result<Self, Self::Error> {
 		match value {
 			Service::Sftp(_) => Err("expected a custom VFS service, got an SFTP service"),
+			Service::Opendal(_) => Err("expected a custom VFS service, got an OpenDAL service"),
 			Service::Mount(lua) | Service::Hub(lua) | Service::Scope(lua) | Service::View(lua) => Ok(lua),
 		}
 	}
@@ -62,6 +81,7 @@ impl Service {
 	pub(crate) fn kind(&self) -> AuthKind {
 		match self {
 			Self::Sftp(_) => AuthKind::Sftp,
+			Self::Opendal(_) => AuthKind::Opendal,
 			Self::Mount(_) => AuthKind::Mount,
 			Self::Hub(_) => AuthKind::Hub,
 			Self::Scope(_) => AuthKind::Scope,
@@ -72,6 +92,7 @@ impl Service {
 	pub(crate) fn auth(&self) -> &AuthArc {
 		match self {
 			Self::Sftp(sftp) => &sftp.auth,
+			Self::Opendal(dal) => &dal.auth,
 			Self::Mount(lua) | Self::Hub(lua) | Self::Scope(lua) | Self::View(lua) => &lua.auth,
 		}
 	}
@@ -79,6 +100,7 @@ impl Service {
 	fn auth_make_mut(&mut self) -> &mut AuthArc {
 		match self {
 			Self::Sftp(sftp) => &mut Arc::make_mut(sftp).auth,
+			Self::Opendal(dal) => &mut Arc::make_mut(dal).auth,
 			Self::Mount(lua) | Self::Hub(lua) | Self::Scope(lua) | Self::View(lua) => {
 				&mut Arc::make_mut(lua).auth
 			}
@@ -118,6 +140,10 @@ impl UserData for Service {
 				b"no_cert_verify" => s.no_cert_verify.into_lua(lua),
 				b"identity_agent" => s.identity_agent.dyn_path().into_lua(lua),
 				_ => Ok(Value::Nil),
+			},
+			Self::Opendal(s) => match &*key {
+				b"service" => lua.create_string(&s.service)?.into_lua(lua),
+				k => str::from_utf8(k).ok().and_then(|k| s.options.get(k)).map(String::as_str).into_lua(lua),
 			},
 			Self::Mount(s) | Self::Hub(s) | Self::Scope(s) | Self::View(s) => match &*key {
 				b"name" => lua.create_string(&*s.name)?.into_lua(lua),

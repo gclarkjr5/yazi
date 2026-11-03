@@ -16,6 +16,7 @@ pub enum AuthKind {
 	Hub,
 	Scope,
 	Sftp,
+	Opendal,
 	View,
 }
 
@@ -25,7 +26,7 @@ impl TryFrom<AuthKind> for PathKind {
 	fn try_from(kind: AuthKind) -> Result<Self, Self::Error> {
 		match kind {
 			AuthKind::Regular | AuthKind::Mount | AuthKind::Hub => Ok(Self::Os),
-			AuthKind::Scope | AuthKind::Sftp => Ok(Self::Unix),
+			AuthKind::Scope | AuthKind::Sftp | AuthKind::Opendal => Ok(Self::Unix),
 			AuthKind::View => bail!("Auth kind has no path kind"),
 		}
 	}

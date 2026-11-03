@@ -170,7 +170,7 @@ impl Spec {
 				(uri, urn)
 			}
 			AuthKind::Mount => (uri.unwrap_or(0), urn.unwrap_or(0)),
-			AuthKind::Hub | AuthKind::Scope | AuthKind::Sftp => {
+			AuthKind::Hub | AuthKind::Scope | AuthKind::Sftp | AuthKind::Opendal => {
 				let uri = uri.unwrap_or(path.name().is_some() as usize);
 				let urn = urn.unwrap_or(path.name().is_some() as usize);
 				(uri, urn)
